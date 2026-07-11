@@ -98,9 +98,10 @@ export const initSocket = (io) => {
       socket.to(roomId).emit("partner-status", { online: true });
     });
 
-    socket.on("send-message", ({ roomId, message, sender }) => {
+    socket.on("send-message", ({ roomId, message, sender, messageId }) => {
       if (!roomId || !message) return;
       const payload = {
+        messageId, // used by clients to reconcile delivered/read ticks
         message,
         sender, // "me" is resolved client-side; server just tags actual role
         role: socket.data.role,
@@ -109,9 +110,21 @@ export const initSocket = (io) => {
       socket.to(roomId).emit("receive-message", payload);
     });
 
-    // ---- Audio call signaling (plain relay — server never inspects SDP/ICE) ----
-    socket.on("call-offer", ({ roomId, sdp }) => {
-      socket.to(roomId).emit("call-offer", { sdp });
+    // Delivery/read receipts (single/double/blue tick) — simple relay,
+    // sender's client matches these back to a message by messageId.
+    socket.on("message-delivered", ({ roomId, messageId }) => {
+      if (!roomId || !messageId) return;
+      socket.to(roomId).emit("message-delivered", { messageId });
+    });
+
+    socket.on("message-read", ({ roomId, messageId }) => {
+      if (!roomId || !messageId) return;
+      socket.to(roomId).emit("message-read", { messageId });
+    });
+
+    // ---- Call signaling (audio or video — server never inspects SDP/ICE) ----
+    socket.on("call-offer", ({ roomId, sdp, callType }) => {
+      socket.to(roomId).emit("call-offer", { sdp, callType: callType || "audio" });
     });
 
     socket.on("call-answer", ({ roomId, sdp }) => {

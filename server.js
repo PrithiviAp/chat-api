@@ -9,7 +9,7 @@ import roomRoutes from "./routes/roomRoutes.js";
 import { initSocket } from "./socket/socketHandler.js";
 
 const PORT = process.env.PORT || 5000;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:53910";
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 const app = express();
 app.use(cors({ origin: CLIENT_ORIGIN }));
